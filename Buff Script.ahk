@@ -25,6 +25,9 @@ IniRead Cure, %IniFile%, HealBar, Cure									;-- Skill Bar that contains the C
 ;-- Where is the resurect skill?
 IniRead Ressurect, %IniFile%, HealBar, Ressurect
 
+;-- Where is the Bonefire Skill ?
+IniRead SummonBar, %IniFile%, Keys, SummonBar							;-- Where are your summons?
+IniRead BoneFire, %IniFile%, SummonBar, BoneFire				;-- Where is the bonefire skill?
 
 ;-- Read Function key Shortcuts for Buffer Bar
 IniRead NormalBuffBar, %IniFile%, Keys, NormalBuffBar					;-- Normal Buff: where is it ?
@@ -45,8 +48,9 @@ IniRead PartyHealing, %IniFile%, PartyBuffBar, PartyHealing				;-- Where is Part
 IniRead BuffDelay, %IniFile%, Delays, BuffDelay							;-- Default delay inbetween buffs.
 					
 
-ToolTip, Buff Script by Neanne`n`nCTRL + W`t: Select Cleric Window`n`nCTRL + C`t: Cure`nCTRL + B`t: Full Buff`n`nCTRL + A`t: SPAM Cure (AutoHeal)`nCTRL + H`t: SPAM Party Heal`nCTRL + P`t: Party Buffs`nCTRL + R`t: Ressurect`nCTRL + S`t: Stop Spam Heal`n`n pgUp`t: Faster Spam`n pgDwn`t: Slower Spam`n=`t: Reset Delays`n`n`nCTRL + I : Get Info`n`nCTRL+END`t: Suspend Script,wX,wY
-SetTimer, RemoveToolTip, 20000
+gosub ^i
+;ToolTip, Buff Script by Neanne`n`nCTRL + W`t: Select Cleric Window`n`nCTRL + C`t: Cure`nCTRL + B`t: Full Buff`n`nCTRL + A`t: SPAM Cure (AutoHeal)`nCTRL + H`t: SPAM Party Heal`nCTRL + P`t: Party Buffs`nCTRL + R`t: Ressurect`nCTRL + S`t: Stop Spam Heal`n`n pgUp`t: Faster Spam`n pgDwn`t: Slower Spam`n=`t: Reset Delays`n`n`nCTRL + I : Get Info`n`nCTRL+END`t: Suspend Script,wX,wY
+;SetTimer, RemoveToolTip, 20000
 
 ContHealing:=0				; Flag that Continuous Party Healing is Active, Also stops it when set to 0
 ContCuring:=0				; Flag that Continuous Curing is Active, Also stops it when set to 0
@@ -71,7 +75,7 @@ wY:=150
 }
 ^i::
 {	
-	ToolTip, Buff Script by Neanne`n`nCTRL + W`t: Select Cleric Window`n`nCTRL + C`t: Cure`nCTRL + B`t: Full Buff`n`nCTRL + A`t: SPAM Cure (AutoHeal)`nCTRL + H`t: SPAM Party Heal`nCTRL + P`t: Party Buffs`nCTRL + R`t: Ressurect`nCTRL + S`t: Stop Spam Heal`n`n pgUp`t: Faster Spam`n pgDwn`t: Slower Spam`n=`t: Reset Delays`n`n`nCTRL + I : Get Info`n`nCTRL+END`t: Suspend Script,wX,wY
+	ToolTip, Buff Script by Neanne`n`nCTRL + W`t: Select Cleric Window`n`nCTRL + C`t: Cure`nCTRL + B`t: Full Buff`n`nCTRL + A`t: SPAM Cure (AutoHeal)`nCTRL + H`t: SPAM Party Heal`nCTRL + P`t: Party Buffs`nCTRL + R`t: Ressurect`nCTRL + F`t: Summon BoneFire`nCTRL + S`t: Stop Spam Heal`n`n pgUp`t: Faster Spam`n pgDwn`t: Slower Spam`n=`t: Reset Delays`n`n`nCTRL + I : Get Info`n`nCTRL+END`t: Suspend Script,wX,wY
 	SetTimer, RemoveToolTip, 5000
 	return
 }
@@ -121,6 +125,48 @@ PgUp::
   Tooltip,Client windows has been set !,wX,wY
   SetTimer, RemoveToolTip, 1500
   return
+}
+
+^f::	; Summon BoneFire
+{
+  WasSpammingCure:=0
+  WasSpammingHeal:=0
+  
+  ;-- Turn of Continuous Curing and make sure it is resumed.
+  if (ContCuring=1) {
+	ContCuring=0
+	WasSpammingCure:=1
+  } else {
+	WasSpammingCure:=0
+  }
+  
+  ;-- Turn off Continuous Healing and make sure it is resumed.
+  if (ContHealing=1){
+	ContHealing=0
+	WasSpammingHeal=1
+  } else {
+    WasSpammingHeal=0
+  }
+  
+  Tooltip,Summon a BoneFire,wX,wY
+  SetTimer, RemoveToolTip, 1500
+  
+  ControlSend, , {%SummonBar%}, ahk_pid %active_id%
+  Sleep, 100
+  ControlSend, , {%BoneFire%}, ahk_pid %active_id%
+  Sleep, 3000
+  
+  ;-- Resume the spams, if any...
+  if (WasSpammingCure=1){
+	  goSub ^a
+  }
+  
+  if (WasSpammingHeal=1){
+	  goSub ^h
+  }
+  
+  return
+  
 }
 
 ^c::       ; Just Heal
@@ -278,9 +324,8 @@ PgUp::
 	   ;-- Cure has a delay by itself; we need to add this delay to the default delay
 	   ;-- to prevent skill spamming.
 	   ToolTip, AUTO-CURE Active,wX,wY
-	   SetTimer, RemoveToolTip, 1000
-	
-	
+	   SetTimer, RemoveToolTip, %CureDelay%
+		
 	   TotalDelay:=SpamDelay+CureDelay
 	   ControlSend, , {%Cure%}, ahk_pid %active_id%
        Sleep, %TotalDelay%
