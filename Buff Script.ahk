@@ -19,38 +19,35 @@
 IniFile = settings.ini
 
 ;-- Read Function keys for HealBar, Cure and Resurect
-IniRead HealBar, %IniFile%, Keys, HealBar								;-- Skill Bar that contains the Healing Skills
-IniRead Cure, %IniFile%, HealBar, Cure									;-- Skill Bar that contains the Cure and Resurect Skills
+IniRead HealBar, %IniFile%, SkillBars, HealingSkillBar								;-- Skill Bar that contains the Healing Skills
+IniRead Cure, %IniFile%, Healing, Cure									;-- Skill Bar that contains the Cure and Resurect Skills
 
 ;-- Where is the resurect skill?
-IniRead Ressurect, %IniFile%, HealBar, Ressurect
+IniRead Ressurect, %IniFile%, Healing, Ressurect
 
 ;-- Where is the Bonefire Skill ?
-IniRead SummonBar, %IniFile%, Keys, SummonBar							;-- Where are your summons?
-IniRead BoneFire, %IniFile%, SummonBar, BoneFire				;-- Where is the bonefire skill?
+IniRead SummonBar, %IniFile%, SkillBars, SummonSkillBar						;-- Where are your summons?
+IniRead BoneFire, %IniFile%, Summons, BoneFire				            ;-- Where is the bonefire skill?
 
 ;-- Read Function key Shortcuts for Buffer Bar
-IniRead NormalBuffBar, %IniFile%, Keys, NormalBuffBar					;-- Normal Buff: where is it ?
-IniRead HittingSupport, %IniFile%, BuffBar, HittingSupport				;-- Normal Buff: where is it ?
-IniRead BattleSupport, %IniFile%, BuffBar, BattleSupport				;-- Normal Buff: where is it ?
-IniRead DamageSupport, %IniFile%, BuffBar, DamageSupport				;-- Normal Buff: where is it ?
-IniRead SharpenSupport, %IniFile%, BuffBar, SharpenSupport				;-- Normal Buff: where is it ?
-IniRead PowerSupport, %IniFile%, BuffBar, PowerSupport					;-- Normal Buff: where is it ?
-IniRead Support, %IniFile%, BuffBar, Support							;-- Normal Buff: where is it ?
+IniRead NormalBuffBar, %IniFile%, SkillBars, BuffingSkillBar			;-- Normal Buff: where is it ?
+IniRead HittingSupport, %IniFile%, BuffSkills, HittingSupport			;-- Normal Buff: where is it ?
+IniRead BattleSupport, %IniFile%, BuffSkills, BattleSupport				;-- Normal Buff: where is it ?
+IniRead DamageSupport, %IniFile%, BuffSkills, DamageSupport				;-- Normal Buff: where is it ?
+IniRead SharpenSupport, %IniFile%, BuffSkills, SharpenSupport			;-- Normal Buff: where is it ?
+IniRead PowerSupport, %IniFile%, BuffSkills, PowerSupport				;-- Normal Buff: where is it ?
+IniRead Support, %IniFile%, BuffSkills, Support							;-- Normal Buff: where is it ?
 
 ;-- Read Party Skills
-IniRead PartyBar, %IniFile%, Keys, PartyBar
-IniRead BlessingBody, %IniFile%, PartyBuffBar, BlessingBody				;-- Where is Blessing Body (F..)
-IniRead BlessingMind, %IniFile%, PartyBuffBar, BlessingMind				;-- Where is Blessing Mind (F..)
-IniRead PartyHealing, %IniFile%, PartyBuffBar, PartyHealing				;-- Where is Party Healing (F..)
+IniRead PartyBar, %IniFile%, SkillBars, PartySkillBar
+IniRead BlessingBody, %IniFile%, PartySkills, BlessingBody				;-- Where is Blessing Body (F..)
+IniRead BlessingMind, %IniFile%, PartySkills, BlessingMind				;-- Where is Blessing Mind (F..)
+IniRead PartyHealing, %IniFile%, PartySkills, PartyHealing				;-- Where is Party Healing (F..)
 
 ;-- Read Default Delays
 IniRead BuffDelay, %IniFile%, Delays, BuffDelay							;-- Default delay inbetween buffs.
-					
 
 gosub ^i
-;ToolTip, Buff Script by Neanne`n`nCTRL + W`t: Select Cleric Window`n`nCTRL + C`t: Cure`nCTRL + B`t: Full Buff`n`nCTRL + A`t: SPAM Cure (AutoHeal)`nCTRL + H`t: SPAM Party Heal`nCTRL + P`t: Party Buffs`nCTRL + R`t: Ressurect`nCTRL + S`t: Stop Spam Heal`n`n pgUp`t: Faster Spam`n pgDwn`t: Slower Spam`n=`t: Reset Delays`n`n`nCTRL + I : Get Info`n`nCTRL+END`t: Suspend Script,wX,wY
-;SetTimer, RemoveToolTip, 20000
 
 ContHealing:=0				; Flag that Continuous Party Healing is Active, Also stops it when set to 0
 ContCuring:=0				; Flag that Continuous Curing is Active, Also stops it when set to 0
@@ -61,8 +58,8 @@ CureDelay:=2500				; Cure takes 2.5 seconds to cast.
 PartyHealDelay=5500			; Party Heal Delay is 5.5 seconds.
 
 ;-- Location of Tooltips
-wX:=30
-wY:=150
+wX:=25
+wY:=160
 
 ^end::
 {
