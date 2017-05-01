@@ -5,13 +5,17 @@
 ; Healing, Curing, Buffing from guest client window.
 ;
 ; Date    : May 2017
-; Version : 1.0
+; Version : 1.10
 ; Author  : Neanne
+;
+; Revisions: 	1.10: Don't cast skills you don't have.
+;				1.00: First version
 ;
 ; Like it ? Send me a present ingame. I Love item mall points :)
 ;------------------------------------------------------------------
 
 #SingleInstance, Force
+#MaxThreadsPerHotkey 2
 #Persistent
 #NoEnv
 
@@ -51,6 +55,12 @@ gosub ^i
 
 ContHealing:=0				; Flag that Continuous Party Healing is Active, Also stops it when set to 0
 ContCuring:=0				; Flag that Continuous Curing is Active, Also stops it when set to 0
+bSpamActive:=0			; Flag Indicating that some spamming loop is active.
+
+bMustBuff:=0			;-- Interrupt Flag
+bMustPartyBuff:=0		;-- Interrupt Flag
+bMustRessurect:=0		;-- Interrupt Flag
+bMustBonefire:=0		;-- Interrupt Flag
 
 ;-- Default Skill and Spam Delays
 SpamDelay:=1000				; 1000ms between spam skill
@@ -123,49 +133,7 @@ PgUp::
   SetTimer, RemoveToolTip, 1500
   return
 }
-
-^f::	; Summon BoneFire
-{
-  WasSpammingCure:=0
-  WasSpammingHeal:=0
-  
-  ;-- Turn of Continuous Curing and make sure it is resumed.
-  if (ContCuring=1) {
-	ContCuring=0
-	WasSpammingCure:=1
-  } else {
-	WasSpammingCure:=0
-  }
-  
-  ;-- Turn off Continuous Healing and make sure it is resumed.
-  if (ContHealing=1){
-	ContHealing=0
-	WasSpammingHeal=1
-  } else {
-    WasSpammingHeal=0
-  }
-  
-  Tooltip,Summon a BoneFire,wX,wY
-  SetTimer, RemoveToolTip, 1500
-  
-  ControlSend, , {%SummonBar%}, ahk_pid %active_id%
-  Sleep, 100
-  ControlSend, , {%BoneFire%}, ahk_pid %active_id%
-  Sleep, 3000
-  
-  ;-- Resume the spams, if any...
-  if (WasSpammingCure=1){
-	  goSub ^a
-  }
-  
-  if (WasSpammingHeal=1){
-	  goSub ^h
-  }
-  
-  return
-  
-}
-
+ 
 ^c::       ; Just Heal
 {
   Tooltip,Cure Once,wX,wY
@@ -179,120 +147,53 @@ PgUp::
   return
 }
 
-^b::       ; Get Me a fresh set of buffs :)
+^b::       ; Buffs
 {
-  WasSpammingCure:=0
-  WasSpammingHeal:=0
+  bMustBuff:=1
   
-  ;-- Turn of Continuous Curing and make sure it is resumed.
-  if (ContCuring=1) {
-	ContCuring=0
-	WasSpammingCure:=1
+  if (bSpamActive=0){
+	 ;-- Buffing Sub is checked from Loops;
+	 ;-- And executed when bMustBuff is 1;
+	 ;-- So Manually execute it now, because we are not spamming.
+	 goSub, Buff
   } else {
-	WasSpammingCure:=0
+	 ;-- We are runninng in another loop; so we must wait until that thread has time.
+	 Tooltip,** Normal Buffs Request **,wX,wY
+	 SetTimer, RemoveToolTip, 2500  
   }
   
-  ;-- Turn off Continuous Healing and make sure it is resumed.
-  if (ContHealing=1){
-	ContHealing=0
-	WasSpammingHeal=1
-  } else {
-    WasSpammingHeal=0
-  }
-  
-  ControlSend, , {%NormalBuffBar%}, ahk_pid %active_id%
-  Sleep, 500
-  
-  ToolTip, Buff: Hitting Support,wX,wY
-  ControlSend, , {%HittingSupport%}, ahk_pid %active_id%
-  Sleep, %BuffDelay%
-  
-  ToolTip, Buff: Battle Support,wX,wY
-  ControlSend, , {%BattleSupport%}, ahk_pid %active_id%
-  Sleep, %BuffDelay%
-  
-  ToolTip, Buff: Damage Support,wX,wY
-  ControlSend, , {%DamageSupport%}, ahk_pid %active_id%
-  Sleep, %BuffDelay%
-  
-  ToolTip, Buff: Sharpen Support,wX,wY
-  ControlSend, , {%SharpenSupport%}, ahk_pid %active_id%
-  Sleep, %BuffDelay%
-  
-  ToolTip, Buff: Power Support,wX,wY
-  ControlSend, , {%PowerSupport%}, ahk_pid %active_id%
-  Sleep, %BuffDelay%
-  
-  ToolTip, Buff: Support Support,wX,wY
-  SetTimer, RemoveToolTip, 1000
-  ControlSend, , {%Support%}, ahk_pid %active_id%
-  Sleep, %BuffDelay%
-  
-  ;-- And Cure 
-  gosub ^c
- 
- ;-- Resume the spams, if any...
-  if (WasSpammingCure=1){
-	  goSub ^a
-  }
-  
-  if (WasSpammingHeal=1){
-	  goSub ^h
-  }
   return
-}
+ }
 
 ^p::		;Party Buffs
 {
-  WasSpammingCure:=0
-  WasSpammingHeal:=0
+  bMustPartyBuff:=1
   
-  ;-- Turn of Continuous Curing and make sure it is resumed.
-  if (ContCuring=1) {
-	ContCuring=0
-	WasSpammingCure:=1
+  if (bSpamActive=0){
+	goSub, PartyBuff
   } else {
-	WasSpammingCure:=0
+	Tooltip,** Party Buffs Request **,wX,wY
+	SetTimer, RemoveToolTip, 2500  
   }
   
-  ;-- Turn off Continuous Healing and make sure it is resumed.
-  if (ContHealing=1){
-	ContHealing=0
-	WasSpammingHeal=1
-  } else {
-    WasSpammingHeal=0
-  }
-  
-  Tooltip,Applying Party buffs,wX,wY
-  SetTimer, RemoveToolTip, 7500
-    
-  ControlSend, , {%PartyBar%}, ahk_pid %active_id%
-  Sleep, 1000
-  
-  Tooltip,Buffing Blessing Body,wX,wY
-  SetTimer, RemoveToolTip, 1000
-  ControlSend, , {%BlessingBody%}, ahk_pid %active_id%
-  Sleep, %BuffDelay%
+  return
+}
 
-  Tooltip,Buffing Blessing Mind,wX,wY
-  SetTimer, RemoveToolTip, 1000
-  ControlSend, , {%BlessingMind%}, ahk_pid %active_id%
-  Sleep, %BuffDelay%
+^f::	; Summon BoneFire
+{
+	bMustBoneFire:=1
   
-  Tooltip,Buffing PartyHealing,wX,wY
-  SetTimer, RemoveToolTip, 1000
-  ControlSend, , {%PartyHealing%}, ahk_pid %active_id%
-  Sleep, %BuffDelay%
+	if (bSpamActive=0){
+	   ;-- Buffing Sub is checked from Loops;
+	   ;-- And executed when bMustBuff is 1;
+	   ;-- So Manually execute it now, because we are not spamming.
+	   goSub, BoneFire
+	} else {
+	   ;-- We are runninng in another loop; so we must wait until that thread has time.
+	   Tooltip,** BoneFire Requested **,wX,wY
+	   SetTimer, RemoveToolTip, 2500  
+	}
   
-  ;-- Resume the spams, if any...
-  if (WasSpammingCure=1){
-	  goSub ^a
-  }
-  
-  if (WasSpammingHeal=1){
-	  goSub ^h
-  }
-
   return
 }
 
@@ -300,8 +201,8 @@ PgUp::
 { 
   Tooltip,Continuous Cure/Party Healing OFF,wX,wY
   SetTimer, RemoveToolTip, 2500
-  ContHealing=0
-  ContCuring=0
+  ContHealing:=0
+  ContCuring:=0
   Return
 }
 
@@ -310,24 +211,67 @@ PgUp::
   Tooltip,Continuous Cure ON,wX,wY
   
   ;-- Set a Condition for the loop. CTRL-S will stop this loop.
-  ContCuring=1
+  ContCuring=1			;-- Continuous Healing is active now, others must stop
+  ContHealing=0			;-- Stop Continuous Party Healing
   
   ;-- Select the Cure Bar.
   ControlSend, , {%HealBar%}, ahk_pid %active_id%
   Sleep, 100
   
   Loop{
+	;-- ContCuring Flag is controlled by CTRL-S. If pressed, spamming is stopped.
     if(ContCuring=1){
-	   ;-- Cure has a delay by itself; we need to add this delay to the default delay
-	   ;-- to prevent skill spamming.
-	   ToolTip, AUTO-CURE Active,wX,wY
-	   SetTimer, RemoveToolTip, %CureDelay%
+		;-- Indicate the spam Flag so other actions know that we are spamming !
+		bSpamActive:=1
 		
-	   TotalDelay:=SpamDelay+CureDelay
-	   ControlSend, , {%Cure%}, ahk_pid %active_id%
-       Sleep, %TotalDelay%
+		;-- Cure has a delay by itself; we need to add this delay to the default delay
+		;-- to prevent skill spamming.
+		ToolTip, AUTO-CURE Active,wX,wY
+		SetTimer, RemoveToolTip, %CureDelay%
+		
+		;-- Send the Cure!
+		ControlSend, , {%Cure%}, ahk_pid %active_id%
+		Sleep, %CureDelay%
+		Sleep,10
+	   
+		bInterrupted=0			;--- Don't know if there are interrupts waiting.
+	    
+		;-- Check Interrupts before continuing
+		if (bMustBuff=1){
+		   bInterrupted=1
+		   gosub, Buff
+		}
+		
+		if (bMustPartyBuff=1){
+		   bInterrupted=1
+		   gosub, PartyBuff
+		}
+		
+		if (bMustBoneFire=1){
+			bInterrupted=1
+			goSub, BoneFire
+		}
+		
+		if (bMustRessurect=1){
+			bInterrupted=1
+			;--Do Resurect
+		}
+		
+		;-- Interrupts Finished.
+		if (bInterrupted=0){
+			;-- Finish the normal cycle and wait the delay.
+			Sleep, %SpamDelay% 
+		} else {
+		    ;-- We had an interrupt; reset the skillbar for this loop!
+		    ControlSend, , {%HealBar%}, ahk_pid %active_id%
+		    Sleep, 100
+		}
+			
+	   
+	   
     } else {
-       break
+       bSpamActive:=0
+	   break
     }
   }
 return
@@ -336,21 +280,67 @@ return
 ^h::
 {
   Tooltip,Continuous Party Healing ON,wX,wY
-  ContHealing=1
+  
+  ;-- Set a Condition for the loop. CTRL-S will stop this loop.
+  ContHealing=1		;-- This spam loop is active now, stop the others
+  ContCuring=0		;-- Stop Curing Loop
   
   ;-- Select Party Healing Bar.
   ControlSend, , {%PartyBar%}, ahk_pid %active_id%
   Sleep, 100
   
   Loop{
+	;-- ContCuring Flag is controlled by CTRL-S. If pressed, spamming is stopped.
     if(ContHealing=1){
-	   ToolTip, AUTO Party HEAL,wX,wY
+		;-- Indicate the spam Flag so other actions know that we are spamming !
+		bSpamActive:=1
+		
+		;-- Cure has a delay by itself; we need to add this delay to the default delay
+		;-- to prevent skill spamming.
+		ToolTip, AUTO Party Heal Active,wX,wY
+		SetTimer, RemoveToolTip, %PartyHealDelay%
+		
+		;-- Send the Cure!
+		ControlSend, , {%PartyHealing%}, ahk_pid %active_id%
+		Sleep, %PartyHealDelay%
+		Sleep,10
 	   
-	   TotalDelay:=SpamDelay+PartyHealDelay
-       ControlSend, , {%PartyHealing%}, ahk_pid %active_id%
-       Sleep, %TotalDelay% 
+		bInterrupted=0			;--- Don't know if there are interrupts waiting.
+	    
+		;-- Check Interrupts before continuing
+		if (bMustBuff=1){
+		   bInterrupted=1
+		   gosub, Buff
+		}
+		
+		if (bMustPartyBuff=1){
+		   bInterrupted=1
+		   gosub, PartyBuff
+		}
+		
+		if (bMustBoneFire=1){
+			bInterrupted=1
+			goSub, BoneFire
+		}
+		
+		if (bMustRessurect=1){
+			bInterrupted=1
+			;--Do Resurect
+		}
+		
+		;-- Interrupts Finished.
+		if (bInterrupted=0){
+			;-- Finish the normal cycle and wait the delay.
+			Sleep, %SpamDelay% 
+		} else {
+		    ;-- We had an interrupt; reset the skillbar for this loop!
+		    ControlSend, , {%PartyBar%}, ahk_pid %active_id%
+		    Sleep, 100
+		}
+		
     } else {
-       break
+       bSpamActive:=0
+	   break
     }
   }
 return
@@ -375,8 +365,108 @@ return
   
 }
 
-
 RemoveToolTip:
+{
 	SetTimer, RemoveToolTip, Off
 	ToolTip
 	return
+}
+	
+Buff:
+{
+  if (bMustBuff=1){
+	  ControlSend, , {%NormalBuffBar%}, ahk_pid %active_id%
+	  Sleep, 100
+	  
+	  if (HittingSupport!=""){
+		 ToolTip, Buff: Hitting Support,wX,wY
+		 ControlSend, , {%HittingSupport%}, ahk_pid %active_id%
+		 Sleep, %BuffDelay%
+	  }
+	  
+	  if (BattleSupport!=""){
+		 ToolTip, Buff: Battle Support,wX,wY
+		 ControlSend, , {%BattleSupport%}, ahk_pid %active_id%
+		 Sleep, %BuffDelay%
+	  }
+	  
+	  if (DamageSupport!=""){
+		 ToolTip, Buff: Damage Support,wX,wY
+		 ControlSend, , {%DamageSupport%}, ahk_pid %active_id%
+		 Sleep, %BuffDelay%
+	  }
+	  
+	  if (SharpenSupport!=""){
+		 ToolTip, Buff: Sharpen Support,wX,wY
+		 ControlSend, , {%SharpenSupport%}, ahk_pid %active_id%
+		 Sleep, %BuffDelay%
+	  }
+	  
+	  if (PowerSupport!=""){
+		 ToolTip, Buff: Power Support,wX,wY
+		 ControlSend, , {%PowerSupport%}, ahk_pid %active_id%
+		 Sleep, %BuffDelay%
+	  }
+	  
+	  if (Support!=""){
+		 ToolTip, Buff: Support Support,wX,wY
+		 ControlSend, , {%Support%}, ahk_pid %active_id%
+		 Sleep, %BuffDelay%
+	  }  
+	  
+	  ;-- Remove ToolTips
+	  SetTimer, RemoveToolTip, 1000
+	}
+	
+	;-- Buffing completed, reset the flag.
+    bMustBuff=0
+    return
+}
+
+;-- this piece of code will apply the party buffs.
+PartyBuff:
+{
+	if (bMustPartyBuff=1){
+		Tooltip,Applying Party buffs,wX,wY
+		SetTimer, RemoveToolTip, 7500
+		
+		ControlSend, , {%PartyBar%}, ahk_pid %active_id%
+		Sleep, 1000
+	  
+		Tooltip,Buffing Blessing Body,wX,wY
+		SetTimer, RemoveToolTip, 1000
+		ControlSend, , {%BlessingBody%}, ahk_pid %active_id%
+		Sleep, %BuffDelay%
+
+		Tooltip,Buffing Blessing Mind,wX,wY
+		SetTimer, RemoveToolTip, 1000
+		ControlSend, , {%BlessingMind%}, ahk_pid %active_id%
+		Sleep, %BuffDelay%
+	  
+		Tooltip,Buffing PartyHealing,wX,wY
+		SetTimer, RemoveToolTip, 1000
+		ControlSend, , {%PartyHealing%}, ahk_pid %active_id%
+		Sleep, %BuffDelay%
+	}
+	
+	bMustPartyBuff=0
+	
+	return
+}
+
+BoneFire:
+{
+	if (bMustBoneFire=1){
+		Tooltip,Summon a BoneFire,wX,wY
+		SetTimer, RemoveToolTip, 1500
+  
+		ControlSend, , {%SummonBar%}, ahk_pid %active_id%
+		Sleep, 100
+		ControlSend, , {%BoneFire%}, ahk_pid %active_id%
+		Sleep, 100
+	}
+	
+	bMustBoneFire=0
+	
+	return
+ }
