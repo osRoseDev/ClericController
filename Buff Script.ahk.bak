@@ -216,7 +216,7 @@ WheelRight::       ;-- Use HP Pots
 	 goSub, Buff
   } else {
 	 ;-- We are runninng in another loop; so we must wait until that thread has time.
-	 Tooltip,* Hey Cleric.. Buffs Please! *,wX,wY
+	 Tooltip,** Normal Buffs Request **,wX,wY
 	 SetTimer, RemoveToolTip, 2500  
   }
   
@@ -230,7 +230,7 @@ WheelRight::       ;-- Use HP Pots
   if (bSpamActive=0){
 	goSub, PartyBuff
   } else {
-	Tooltip,* Hey Cleric.. Party Buffs Please! *,wX,wY
+	Tooltip,** Party Buffs Request **,wX,wY
 	SetTimer, RemoveToolTip, 2500  
   }
   
@@ -248,7 +248,7 @@ WheelRight::       ;-- Use HP Pots
 	   goSub, BoneFire
 	} else {
 	   ;-- We are runninng in another loop; so we must wait until that thread has time.
-	   Tooltip,* Hey Cleric.. BoneFire please *,wX,wY
+	   Tooltip,** BoneFire Requested **,wX,wY
 	   SetTimer, RemoveToolTip, 2500  
 	}
   
