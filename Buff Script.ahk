@@ -22,8 +22,17 @@
 ;-- Yes, we use an ini file to store key bindings. 
 IniFile = settings.ini
 
+;-- We Abuse the Kiss Skill to call the cleric to your position
+IniRead BasicBar, %IniFile%, SkillBars, BasicBar
+IniRead Kiss, %IniFile%, Basic, Kiss
+
+;-- Read Function Keys for the PotBar
+IniRead FoodBar, %IniFile%, SkillBars, FoodBar						   ;-- Skill Bar that contains the Potions
+IniRead HPPots,%IniFile%, Food, HPPots
+IniRead MPPots, %IniFile%, Food, MPPots
+
 ;-- Read Function keys for HealBar, Cure and Resurect
-IniRead HealBar, %IniFile%, SkillBars, HealingSkillBar								;-- Skill Bar that contains the Healing Skills
+IniRead HealBar, %IniFile%, SkillBars, HealingSkillBar					;-- Skill Bar that contains the Healing Skills
 IniRead Cure, %IniFile%, Healing, Cure									;-- Skill Bar that contains the Cure and Resurect Skills
 
 ;-- Where is the resurect skill?
@@ -61,16 +70,34 @@ bMustBuff:=0			;-- Interrupt Flag
 bMustPartyBuff:=0		;-- Interrupt Flag
 bMustRessurect:=0		;-- Interrupt Flag
 bMustBonefire:=0		;-- Interrupt Flag
+bMustHPPot:=0			;-- Interrupt Flag
+bMustMPPot:=0			;-- Interrupt Flag
+bGetHere:=0				;-- Interrupt Flag
 
 ;-- Default Skill and Spam Delays
 SpamDelay:=1000				; 1000ms between spam skill
-CureDelay:=2500				; Cure takes 2.5 seconds to cast.
+CureDelay:=2700				; Cure takes 2.5 seconds to cast.
 PartyHealDelay=5500			; Party Heal Delay is 5.5 seconds.
 
 ;-- Location of Tooltips
-wX:=25
-wY:=160
+wX:=10
+wY:=175
 
+home::
+WheelLeft::
+{
+	bGetHere:=1
+	
+	if (bSpamActive=0){
+		goSub, GetHere
+	} else {
+	    ;-- We are runninng in another loop; so we must wait until that thread has time.
+	    Tooltip,** Get Here Request **,wX,wY
+	    SetTimer, RemoveToolTip, 2500  
+	}
+	
+	return
+}
 ^end::
 {
 	;Pauses or resumes the script.
@@ -82,7 +109,7 @@ wY:=160
 }
 ^i::
 {	
-	ToolTip, Buff Script by Neanne`n`nCTRL + W`t: Select Cleric Window`n`nCTRL + C`t: Cure`nCTRL + B`t: Full Buff`n`nCTRL + A`t: SPAM Cure (AutoHeal)`nCTRL + H`t: SPAM Party Heal`nCTRL + P`t: Party Buffs`nCTRL + R`t: Ressurect`nCTRL + F`t: Summon BoneFire`nCTRL + S`t: Stop Spam Heal`n`n pgUp`t: Faster Spam`n pgDwn`t: Slower Spam`n=`t: Reset Delays`n`n`nCTRL + I : Get Info`n`nCTRL+END`t: Suspend Script,wX,wY
+	ToolTip, Buff Script by Neanne`n`nCTRL + W`t: Select Cleric Window`n`nCTRL + C`t: Cure`nCTRL + B`t: Full Buff`n`nCTRL + A`t: SPAM Cure (AutoHeal)`nCTRL + H`t: SPAM Party Heal`nCTRL + P`t: Party Buffs`nCTRL + R`t: Ressurect`nCTRL + F`t: Summon BoneFire`nCTRL + S`t: Stop Spam Heal`n`n     [`t: Use HP/HP Potion`n     ]`t: Use MP / MP Potion`n`n pgUp`t: Faster Spam`n pgDwn`t: Slower Spam`n=`t: Reset Delays`n`n`nCTRL + I : Get Info`n`nCTRL+END`t: Suspend Script,wX,wY
 	SetTimer, RemoveToolTip, 5000
 	return
 }
@@ -145,6 +172,37 @@ PgUp::
   Sleep, %BuffDelay%
     
   return
+}
+
+[::
+WheelRight::       ;-- Use HP Pots
+{
+	bMustHPPot:=1
+	
+	if (bSpamActive=0){
+		goSub, UseHPPot
+	} else {
+	    ;-- We are runninng in another loop; so we must wait until that thread has time.
+	    Tooltip,** Consume FOOD Request **,wX,wY
+	    SetTimer, RemoveToolTip, 2500  
+	}
+	
+	return
+}
+
+]::       ;-- Consume MP Pot
+{
+	bMustMPPot:=1
+	
+	if (bSpamActive=0){
+		goSub, UseMPPot
+	} else {
+	    ;-- We are runninng in another loop; so we must wait until that thread has time.
+	    Tooltip,** Consume MANA Request **,wX,wY
+	    SetTimer, RemoveToolTip, 2500  
+	}
+	
+	return
 }
 
 ^b::       ; Buffs
@@ -226,7 +284,7 @@ PgUp::
 		
 		;-- Cure has a delay by itself; we need to add this delay to the default delay
 		;-- to prevent skill spamming.
-		ToolTip, AUTO-CURE Active,wX,wY
+		ToolTip,       ~~~~  AUTO-CURE Active  ~~~~,wX,wY
 		SetTimer, RemoveToolTip, %CureDelay%
 		
 		;-- Send the Cure!
@@ -237,6 +295,21 @@ PgUp::
 		bInterrupted=0			;--- Don't know if there are interrupts waiting.
 	    
 		;-- Check Interrupts before continuing
+		if (bMustHPPot=1){
+			bInterrupted=1
+			goSub, UseHPPot
+		}
+		
+		if (bMustMPPot=1){
+			bInterrupted=1
+			goSub, UseMPPot
+		}
+		
+		if (bGetHere){
+			bInterrupted=1
+			goSub, GetHere
+		}
+		
 		if (bMustBuff=1){
 		   bInterrupted=1
 		   gosub, Buff
@@ -264,6 +337,7 @@ PgUp::
 		} else {
 		    ;-- We had an interrupt; reset the skillbar for this loop!
 		    ControlSend, , {%HealBar%}, ahk_pid %active_id%
+			Sleep, %SpamDelay% 
 		    Sleep, 100
 		}
 			
@@ -308,6 +382,21 @@ return
 		bInterrupted=0			;--- Don't know if there are interrupts waiting.
 	    
 		;-- Check Interrupts before continuing
+		if (bMustHPPot=1){
+			bInterrupted=1
+			goSub, UseHPPot
+		}
+		
+		if (bMustMPPot=1){
+			bInterrupted=1
+			goSub, UseMPPot
+		}
+		
+		if (bGetHere){
+			bInterrupted=1
+			goSub, GetHere
+		}
+		
 		if (bMustBuff=1){
 		   bInterrupted=1
 		   gosub, Buff
@@ -467,6 +556,52 @@ BoneFire:
 	}
 	
 	bMustBoneFire=0
+	
+	return
+ }
+ 
+ UseHPPot:
+ {
+	if (bMustHPPot=1){
+		Tooltip,Use HP / HP Potion,wX,wY
+		SetTimer, RemoveToolTip, 1500
+  
+		ControlSend, , {%FoodBar%}, ahk_pid %active_id%
+		Sleep, 100
+		ControlSend, , {%HPPots%}, ahk_pid %active_id%
+		Sleep, 100
+	}
+	bMustHPPot=0
+	return
+ } 
+ 
+ UseMPPot:
+ {
+	if (bMustMPPot=1){
+		Tooltip,Use MP / MP Potion,wX,wY
+		SetTimer, RemoveToolTip, 1500
+  
+		ControlSend, , {%FoodBar%}, ahk_pid %active_id%
+		Sleep, 100
+		ControlSend, , {%MPPots%}, ahk_pid %active_id%
+		Sleep, 100
+	}
+	bMustMPPot=0
+	return
+ }
+ 
+ GetHere:
+ {
+	if (bGetHere=1){
+		ToolTip, ** Come Here **,wX,wY
+		SetTimer, RemoveToolTip, 1500
+		
+		ControlSend, , {%BasicBar%}, ahk_pid %active_id%
+		Sleep, 100
+		ControlSend,, %Kiss%, ahk_pid %active_id%
+	}
+	
+	bGetHere=0;
 	
 	return
  }
