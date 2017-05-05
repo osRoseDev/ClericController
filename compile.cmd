@@ -16,6 +16,7 @@ Set OutFile=%CurrentDir%\Bin\Auto-Cleric.exe
 Set Icon=%CurrentDir%\Cleric-bot.ico
 
 "C:\Program Files\AutoHotkey\Compiler\Ahk2Exe.exe" /in "%Script%" /icon "%Icon%" /out "%OutFile%"
+copy "%CurrentDir%\settings.ini" "%CurrentDir%\Bin\Settings.ini"
 Echo.
 Echo Compile Done. Output file is : %OutFile%
 Echo.
