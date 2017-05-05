@@ -12,6 +12,12 @@ A Rose Online Autohotkey Script for controlling your Cleric from the client wind
 * Cleric take MP
 * Cleric take HP
 * Pause Script
+* Skips any buffs that are not defined (without delay)
+* All delays are configurable in the ini file.
+* Includes a compile script so you can make an .exe
+
+## Requirements
+* Download Authotkey 32-bit
 
 ## Configure the INI file
 **Important note: It seems impossible to reliably use the F10 (2nd) skillbar in windows 10. My advice is not to use the 2nd Skill Bar. **
