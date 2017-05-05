@@ -5,10 +5,12 @@
 ; Healing, Curing, Buffing from guest client window.
 ;
 ; Date    : May 2017
-; Version : 1.10
+; Version : 1.30
 ; Author  : Neanne
 ;
-; Revisions: 	1.10: Don't cast skills you don't have.
+; Revisions: 	1.30: Introduced Come-to-Me, EatHP, EatMP
+;				1.20: Multithreading
+;				1.10: Don't cast skills you don't have.
 ;				1.00: First version
 ;
 ; Like it ? Send me a present ingame. I Love item mall points :)
@@ -59,11 +61,16 @@ IniRead PartyHealing, %IniFile%, PartySkills, PartyHealing				;-- Where is Party
 
 ;-- Read Default Delays
 IniRead BuffDelay, %IniFile%, Delays, BuffDelay							;-- Default delay inbetween buffs.
+IniRead CureDelay, %iniFile%, Delays, CureDelay							;-- Duration of Cure SkillBars		
+IniRead SpamDelay, %iniFile%, Delays, SpamDelay							;-- Default delay between spam cure/heal
+IniRead PartyHealDelay, %iniFile%, Delays, PartyHealDelay				;-- Duration of Party Heal Skill
 
+
+;-- Display Info/Welcome screen.
 gosub ^i
 
-ContHealing:=0				; Flag that Continuous Party Healing is Active, Also stops it when set to 0
-ContCuring:=0				; Flag that Continuous Curing is Active, Also stops it when set to 0
+ContHealing:=0			; Flag that Continuous Party Healing is Active, Also stops it when set to 0
+ContCuring:=0			; Flag that Continuous Curing is Active, Also stops it when set to 0
 bSpamActive:=0			; Flag Indicating that some spamming loop is active.
 
 bMustBuff:=0			;-- Interrupt Flag
@@ -75,9 +82,9 @@ bMustMPPot:=0			;-- Interrupt Flag
 bGetHere:=0				;-- Interrupt Flag
 
 ;-- Default Skill and Spam Delays
-SpamDelay:=1000				; 1000ms between spam skill
-CureDelay:=2700				; Cure takes 2.5 seconds to cast.
-PartyHealDelay=5500			; Party Heal Delay is 5.5 seconds.
+;SpamDelay:=1000				; 1000ms between spam skill
+;CureDelay:=2700				; Cure takes 2.5 seconds to cast.
+;PartyHealDelay=5500			; Party Heal Delay is 5.5 seconds.
 
 ;-- Location of Tooltips
 wX:=10
@@ -379,7 +386,7 @@ return
   ControlSend, , {%Ressurect%}, ahk_pid %active_id%
   
   Tooltip,Character Resurected-restart SPAM Manually if needed.,wX,wY
-  SetTimer, RemoveToolTip, 1500
+  SetTimer, RemoveToolTip, 2500
   
   return
   
