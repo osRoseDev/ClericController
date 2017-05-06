@@ -8,7 +8,8 @@
 ; Version : 1.30
 ; Author  : Neanne
 ;
-; Revisions: 	1.30: Introduced Come-to-Me, EatHP, EatMP
+; Revisions: 	1.40; Added PickUp Loot (CTRL-L)
+;				1.30: Introduced Come-to-Me, EatHP, EatMP
 ;				1.20: Multithreading
 ;				1.10: Don't cast skills you don't have.
 ;				1.00: First version
@@ -80,6 +81,7 @@ bMustBonefire:=0		;-- Interrupt Flag
 bMustHPPot:=0			;-- Interrupt Flag
 bMustMPPot:=0			;-- Interrupt Flag
 bGetHere:=0				;-- Interrupt Flag
+bGetLoot:=0				;-- Interrupt Flag
 
 ;-- Default Skill and Spam Delays
 ;SpamDelay:=1000				; 1000ms between spam skill
@@ -460,17 +462,17 @@ PartyBuff:
 		ControlSend, , {%PartyBar%}, ahk_pid %active_id%
 		Sleep, 1000
 	  
-		Tooltip,Buffing Blessing Body,wX,wY
+		Tooltip,Party: Buffing Blessing Body,wX,wY
 		SetTimer, RemoveToolTip, 1000
 		ControlSend, , {%BlessingBody%}, ahk_pid %active_id%
 		Sleep, %BuffDelay%
 
-		Tooltip,Buffing Blessing Mind,wX,wY
+		Tooltip,Party: Buffing Blessing Mind,wX,wY
 		SetTimer, RemoveToolTip, 1000
 		ControlSend, , {%BlessingMind%}, ahk_pid %active_id%
 		Sleep, %BuffDelay%
 	  
-		Tooltip,Buffing PartyHealing,wX,wY
+		Tooltip,Party: Buffing Healing,wX,wY
 		SetTimer, RemoveToolTip, 1000
 		ControlSend, , {%PartyHealing%}, ahk_pid %active_id%
 		Sleep, %BuffDelay%
@@ -484,7 +486,7 @@ PartyBuff:
 BoneFire:
 {
 	if (bMustBoneFire=1){
-		Tooltip,Summon a BoneFire,wX,wY
+		Tooltip,** Cleric is making a BoneFire **,wX,wY
 		SetTimer, RemoveToolTip, 1500
   
 		ControlSend, , {%SummonBar%}, ahk_pid %active_id%
@@ -501,7 +503,7 @@ BoneFire:
 UseHPPot:
  {
 	if (bMustHPPot=1){
-		Tooltip,Use HP / HP Potion,wX,wY
+		Tooltip,** Cleric is using HP / HP Potion **,wX,wY
 		SetTimer, RemoveToolTip, 1500
   
 		ControlSend, , {%FoodBar%}, ahk_pid %active_id%
@@ -516,7 +518,7 @@ UseHPPot:
 UseMPPot:
  {
 	if (bMustMPPot=1){
-		Tooltip,Use MP / MP Potion,wX,wY
+		Tooltip,** Cleric is using MP / MP Potion **,wX,wY
 		SetTimer, RemoveToolTip, 2500
   
 		ControlSend, , {%FoodBar%}, ahk_pid %active_id%
@@ -531,7 +533,7 @@ UseMPPot:
 GetHere:
  {
 	if (bGetHere=1){
-		ToolTip, ** Cleric Moving **,wX,wY
+		ToolTip, ** Cleric is on the move **,wX,wY
 		SetTimer, RemoveToolTip, 1500
 		
 		ControlSend, , {%BasicBar%}, ahk_pid %active_id%
@@ -544,6 +546,7 @@ GetHere:
 	return
  }
  
+  
  CheckInterruptHandler()
  {
 	;-- Each hotkey press sets a global variable to '1'
@@ -595,6 +598,6 @@ GetHere:
 		bInterrupted=1
 		;--Do Resurect
 	}
-	
+
 	return bInterrupted
  }
