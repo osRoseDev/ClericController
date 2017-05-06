@@ -1,4 +1,4 @@
-# ClericController
+ # ClericController
 A Rose Online Autohotkey Script for controlling your Cleric from the client window.
 
 ## Features:
@@ -17,7 +17,7 @@ A Rose Online Autohotkey Script for controlling your Cleric from the client wind
 * Includes a compile script so you can make an .exe
 
 ## Requirements
-* Download Authotkey 32-bit
+* Download and install Authotkey 2.x  (32-bit) [via this link](https://www.autohotkey.com/download)
 
 ## Configure the INI file
 **Important note: It seems impossible to reliably use the F10 (2nd) skillbar in windows 10. My advice is not to use the 2nd Skill Bar. **
