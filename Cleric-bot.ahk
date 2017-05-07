@@ -8,8 +8,7 @@
 ; Version : 1.30
 ; Author  : Neanne
 ;
-; Revisions: 	1.40; Added PickUp Loot (CTRL-L)
-;				1.30: Introduced Come-to-Me, EatHP, EatMP
+; Revisions: 	1.30: Introduced Come-to-Me, EatHP, EatMP
 ;				1.20: Multithreading
 ;				1.10: Don't cast skills you don't have.
 ;				1.00: First version
@@ -139,7 +138,7 @@ WheelLeft::
 PgDn::
 {
 	;-- Decreate spam CURE/Party Heal rates (Go Slower)
-	SpamDelay+=250
+	SpamDelay+=100
 	SetFormat, float, 0.2
 	Seconds:=SpamDelay/1000
 	ToolTip,(SPAM) Delay is now %Seconds% Seconds,wX,wY
@@ -150,7 +149,7 @@ PgDn::
 PgUp::
 {
 	;-- Increase spam CURE/Party Heal rates (Go Faster)
-	SpamDelay-=250
+	SpamDelay-=100
 	
 	if (SpamDelay<0){
 		SpamDelay:=0
